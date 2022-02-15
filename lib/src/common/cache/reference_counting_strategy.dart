@@ -7,24 +7,24 @@ class ReferenceCountingStrategy<TIdentifier, TValue>
     extends CachingStrategy<TIdentifier, TValue> {
   Map<TIdentifier, int> _count = <TIdentifier, int>{};
 
-  int referenceCount(TIdentifier id) {
+  int? referenceCount(TIdentifier id) {
     return _count[id];
   }
 
   @override
-  Future<Null> onDidRelease(
-      TIdentifier id, TValue value, Future<Null> remove(TIdentifier id)) async {
+  Future<Null> onDidRelease(TIdentifier? id, TValue? value,
+      Future<Null> remove(TIdentifier id)?) async {
     if (!_count.containsKey(id)) {
       return null;
     }
 
-    if (referenceCount(id) == 0) {
-      await remove(id);
+    if (referenceCount(id!) == 0) {
+      await remove!(id);
     }
   }
 
   @override
-  Future<Null> onDidRemove(TIdentifier id, TValue value) async {
+  Future<Null> onDidRemove(TIdentifier? id, TValue? value) async {
     _count.remove(id);
   }
 
@@ -34,9 +34,9 @@ class ReferenceCountingStrategy<TIdentifier, TValue>
   }
 
   @override
-  void onWillRelease(TIdentifier id) {
-    if (_count[id] != null && _count[id] > 0) {
-      _count[id]--;
+  void onWillRelease(TIdentifier? id) {
+    if (_count[id] != null && _count[id]! > 0) {
+      _count[id!] = _count[id]! - 1;
     }
   }
 }

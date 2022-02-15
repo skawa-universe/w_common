@@ -25,8 +25,8 @@ class _InnerDisposable extends disposable_common.Disposable {
   @override
   String get disposableTypeName => '_InnerDisposable';
 
-  Func<Future<Null>> onDisposeHandler;
-  Func<Future<Null>> onWillDisposeHandler;
+  late Func<Future<Null>> onDisposeHandler;
+  late Func<Future<Null>> onWillDisposeHandler;
 
   @override
   Future<Null> onDispose() {
@@ -163,7 +163,7 @@ class Disposable implements disposable_common.Disposable {
   /// generate a [disposable_common.LeakFlag]
   /// and manually attach it to an object. For example, this may be useful in
   /// code transpiled to JavaScript from another language.
-  static void enableDebugMode({bool disableLogging, bool disableTelemetry}) {
+  static void enableDebugMode({bool? disableLogging, bool? disableTelemetry}) {
     disposable_common.Disposable.enableDebugMode(
         disableLogging: disableLogging, disableTelemetry: disableTelemetry);
 
@@ -203,7 +203,7 @@ class Disposable implements disposable_common.Disposable {
   bool get isOrWillBeDisposed => _disposable.isOrWillBeDisposed;
 
   @override
-  Future<T> awaitBeforeDispose<T>(Future<T> future) =>
+  Future<T> awaitBeforeDispose<T>(Future<T>? future) =>
       _disposable.awaitBeforeDispose(future);
 
   @override
@@ -220,7 +220,7 @@ class Disposable implements disposable_common.Disposable {
   }
 
   @override
-  void flagLeak([String description]) {
+  void flagLeak([String? description]) {
     _disposable.flagLeak(
         description ?? '$disposableTypeName (runtimeType: $runtimeType)');
   }
@@ -240,46 +240,46 @@ class Disposable implements disposable_common.Disposable {
 
   @override
   StreamSubscription<T> listenToStream<T>(
-          Stream<T> stream, void onData(T event),
-          {Function onError, void onDone(), bool cancelOnError}) =>
+          Stream<T>? stream, void onData(T event)?,
+          {Function? onError, void onDone()?, bool? cancelOnError}) =>
       _disposable.listenToStream(stream, onData,
           onError: onError, onDone: onDone, cancelOnError: cancelOnError);
 
   @override
-  disposable_common.Disposable manageAndReturnDisposable(
-          disposable_common.Disposable disposable) =>
+  disposable_common.Disposable? manageAndReturnDisposable(
+          disposable_common.Disposable? disposable) =>
       _disposable.manageAndReturnDisposable(disposable);
 
   @override
-  T manageAndReturnTypedDisposable<T extends disposable_common.Disposable>(
-          T disposable) =>
+  T? manageAndReturnTypedDisposable<T extends disposable_common.Disposable>(
+          T? disposable) =>
       _disposable.manageAndReturnTypedDisposable(disposable);
 
   @override
-  Completer<T> manageCompleter<T>(Completer<T> completer) =>
+  Completer<T> manageCompleter<T>(Completer<T>? completer) =>
       _disposable.manageCompleter(completer);
 
   @override
-  void manageDisposable(disposable_common.Disposable disposable) =>
+  void manageDisposable(disposable_common.Disposable? disposable) =>
       _disposable.manageDisposable(disposable);
 
   @deprecated
   @override
-  void manageDisposer(disposable_common.Disposer disposer) =>
+  void manageDisposer(disposable_common.Disposer? disposer) =>
       _disposable.manageDisposer(disposer);
 
   @override
-  disposable_common.ManagedDisposer getManagedDisposer(
-          disposable_common.Disposer disposer) =>
+  disposable_common.ManagedDisposer? getManagedDisposer(
+          disposable_common.Disposer? disposer) =>
       _disposable.getManagedDisposer(disposer);
 
   @override
-  void manageStreamController(StreamController<dynamic> controller) =>
+  void manageStreamController(StreamController<dynamic>? controller) =>
       _disposable.manageStreamController(controller);
 
   @deprecated
   @override
-  void manageStreamSubscription(StreamSubscription<dynamic> subscription) =>
+  void manageStreamSubscription(StreamSubscription<dynamic>? subscription) =>
       _disposable.manageStreamSubscription(subscription);
 
   /// Callback to allow arbitrary cleanup on dispose.
@@ -307,7 +307,7 @@ class Disposable implements disposable_common.Disposable {
   /// method on the document singleton to remove the listener. At this point
   /// the only way to remove the listener is to use the [dispose] method.
   void subscribeToDocumentEvent(String event, EventListener callback,
-      {bool useCapture, EventTarget documentObject}) {
+      {bool? useCapture, EventTarget? documentObject}) {
     if (documentObject == null) {
       documentObject = document;
     }
@@ -322,7 +322,7 @@ class Disposable implements disposable_common.Disposable {
   /// to remove the listener is to use the [dispose] method.
   void subscribeToDomElementEvent(
       Element element, String event, EventListener callback,
-      {bool useCapture}) {
+      {bool? useCapture}) {
     _subscribeToEvent(element, event, callback, useCapture);
   }
 
@@ -333,7 +333,7 @@ class Disposable implements disposable_common.Disposable {
   /// method on the window singleton to remove the listener. At this point
   /// the only way to remove the listener is to use the [dispose] method.
   void subscribeToWindowEvent(String event, EventListener callback,
-      {bool useCapture, EventTarget windowObject}) {
+      {bool? useCapture, EventTarget? windowObject}) {
     if (windowObject == null) {
       windowObject = window;
     }
@@ -341,7 +341,7 @@ class Disposable implements disposable_common.Disposable {
   }
 
   void _subscribeToEvent(EventTarget eventTarget, String event,
-      EventListener callback, bool useCapture) {
+      EventListener callback, bool? useCapture) {
     eventTarget.addEventListener(event, callback, useCapture);
     _disposable.getManagedDisposer(() {
       eventTarget.removeEventListener(event, callback, useCapture);

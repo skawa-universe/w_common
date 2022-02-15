@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 @TestOn('browser')
-
 import 'dart:async';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
@@ -21,7 +20,7 @@ import 'package:w_common/src/common/cache/least_recently_used_strategy.dart';
 
 void main() {
   group('Cache', () {
-    Cache<String, Object> cache;
+    late Cache<String, Object> cache;
     const String cachedId = '1';
     final Object cachedValue = Object();
     const String notCachedId = '2';
@@ -34,6 +33,7 @@ void main() {
 
     group('get', () {
       test('should return cached value when identifier is cached', () async {
+        await cache.get(cachedId, () => cachedValue);
         var value = await cache.get(cachedId, () => notCachedValue);
         expect(value, same(cachedValue));
       });
@@ -43,7 +43,7 @@ void main() {
           'synchronously', () async {
         var cachedValues = <Future<Object>>[
           cache.get(notCachedId, () => notCachedValue),
-          cache.get(notCachedId, () => Object())
+          cache.get(notCachedId, Object.new)
         ];
         var completedValues = await Future.wait(cachedValues);
         expect(completedValues[0], same(notCachedValue));
@@ -198,7 +198,9 @@ void main() {
           expect(context.id, cachedId);
           expect(context.value, isNull);
         }, count: 1));
-        cache..remove(cachedId)..remove(cachedId);
+        cache
+          ..remove(cachedId)
+          ..remove(cachedId);
       });
 
       test(
@@ -209,7 +211,9 @@ void main() {
           expect(context.id, cachedId);
           expect(context.value, cachedValue);
         }, count: 1));
-        cache..remove(cachedId)..remove(cachedId);
+        cache
+          ..remove(cachedId)
+          ..remove(cachedId);
       });
 
       test('should not dispatch didUpdate event when identifier is not cached',
@@ -542,6 +546,7 @@ void main() {
               await Future<dynamic>.delayed(const Duration(seconds: 1));
               callbackCompleted = true;
               throw Error();
+              return cachedValue;
             });
           },
               onError: expectAsync1((_) {},
@@ -556,9 +561,12 @@ void main() {
           'future returned from callback', () async {
         final error = Error();
         await cache.applyToItem(cachedId, (_) async {
-          await Future<dynamic>.delayed(Duration(seconds: 1));
+          await Future<dynamic>.delayed(const Duration(seconds: 1));
           throw error;
+          // return cachedValue;
         }).catchError((e) {
+          // print((e as Error).stackTrace);
+          // print(error);
           expect(e, error);
         });
       });
@@ -576,6 +584,7 @@ void main() {
         try {
           final applyToItemFuture = cache.applyToItem(cachedId, (_) async {
             throw Error();
+            return cachedValue;
           });
           expect(cache.applyToItemCallBacks, isNotEmpty);
           await applyToItemFuture;
@@ -606,9 +615,20 @@ void main() {
 
 class MockCachingStrategy extends Mock
     implements CachingStrategy<String, Object> {
-  MockCachingStrategy() {
-    when(onDidGet(any, any)).thenAnswer((i) => Future.value(null));
-    when(onDidRelease(any, any, any)).thenAnswer((i) => Future.value(null));
-    when(onDidRemove(any, any)).thenAnswer((i) => Future.value(null));
+  @override
+  Future<Null> onDidGet(String? id, Object? value) async {
+    return super.noSuchMethod(Invocation.method(#onDidGet, [id, value]));
+  }
+
+  @override
+  Future<Null> onDidRelease(
+      String? id, Object? value, Future<Null> remove(String id)?) async {
+    return super
+        .noSuchMethod(Invocation.method(#onDidRelease, [id, value, remove]));
+  }
+
+  @override
+  Future<Null> onDidRemove(String? id, Object? value) async {
+    return super.noSuchMethod(Invocation.method(#onDidRemove, [id, value]));
   }
 }

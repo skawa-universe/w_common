@@ -14,7 +14,7 @@ import 'package:sass/sass.dart' as sass;
 import 'package:source_maps/source_maps.dart';
 import 'package:watcher/watcher.dart';
 
-Stopwatch taskTimer;
+late Stopwatch taskTimer;
 
 final Colorize errorMessageHeading = Colorize().apply(Styles.RED, '[ERROR]');
 final Colorize failureMessageHeading =
@@ -85,17 +85,17 @@ final ArgParser sassCliArgs = ArgParser()
       help: 'Prints usage instructions to the terminal.');
 
 class SassCompilationOptions {
-  final List<String> unparsedArgs;
+  final List<String>? unparsedArgs;
   final String expandedOutputStyleFileExtension;
   final List<String> outputStyles;
   final bool watch;
   final bool check;
 
   SassCompilationOptions({
-    @required this.unparsedArgs,
-    @required String outputDir,
-    String sourceDir,
-    String compressedOutputStyleFileExtension,
+    required this.unparsedArgs,
+    required String outputDir,
+    String? sourceDir,
+    String? compressedOutputStyleFileExtension,
     this.expandedOutputStyleFileExtension =
         expandedOutputStyleFileExtensionDefaultValue,
     this.outputStyles = outputStyleDefaultValue,
@@ -120,8 +120,8 @@ class SassCompilationOptions {
       return;
     }
 
-    if (unparsedArgs != null && unparsedArgs.isNotEmpty) {
-      compileTargets = unparsedArgs.map(path.relative).toList();
+    if (unparsedArgs != null && unparsedArgs!.isNotEmpty) {
+      compileTargets = unparsedArgs!.map(path.relative).toList();
       exitCode = _validateCompileTargets();
       if (exitCode == 0 && sourceDir != null) {
         _sourceDir = path.split(compileTargets.first).first;
@@ -151,23 +151,23 @@ class SassCompilationOptions {
   }
 
   List<String> get watchDirs => _watchDirs;
-  List<String> _watchDirs;
+  late List<String> _watchDirs;
 
   String get sourceDir => _sourceDir;
-  String _sourceDir;
+  late String _sourceDir;
 
   String get outputDir => _outputDir;
-  String _outputDir;
+  late String _outputDir;
 
   String get compressedOutputStyleFileExtension =>
       _compressedOutputStyleFileExtension;
-  String _compressedOutputStyleFileExtension;
+  late String _compressedOutputStyleFileExtension;
 
-  List<String> compileTargets;
+  late List<String> compileTargets;
 
   int _validateCompileTargets() {
     var exitCode = 0;
-    String srcRootDirName;
+    String? srcRootDirName;
     for (var target in compileTargets) {
       if (!File(target).existsSync()) {
         print('$errorMessageHeading "$target" does not exist');
@@ -307,7 +307,7 @@ Future<Null> watch(SassCompilationOptions options) async {
 }
 
 Future<void> compileSass(SassCompilationOptions options,
-    {List<String> compileTargets, bool printReadyMessage = true}) async {
+    {List<String>? compileTargets, bool printReadyMessage = true}) async {
   taskTimer.start();
 
   compileTargets ??= options.compileTargets;
@@ -338,10 +338,10 @@ Future<void> compileSass(SassCompilationOptions options,
           outputDir = path.join(outputDir, outputSubDir);
         }
 
-        SingleMapping sourceMap;
+        late SingleMapping sourceMap;
         var cssPath = path.setExtension(
             path.join(outputDir, path.basename(target)),
-            outputStyleArgToOutputStyleFileExtension[style]);
+            outputStyleArgToOutputStyleFileExtension[style]!);
         var cssSrc = sass.compile(target,
             style: outputStyle,
             color: true,
@@ -427,7 +427,8 @@ Future<void> compileSass(SassCompilationOptions options,
 
 bool isSassPartial(String filePath) => path.basename(filePath).startsWith('_');
 
-PackageConfig _cachedPackageConfig;
+PackageConfig? _cachedPackageConfig;
+
 Future<PackageConfig> get _packageConfig async {
   var dir = Directory.current;
   _cachedPackageConfig ??= await findPackageConfig(dir);
@@ -435,5 +436,5 @@ Future<PackageConfig> get _packageConfig async {
     throw StateError('Package configuration for ${dir.absolute} not found. '
         'You must run `pub get` before running `compile_sass`.');
   }
-  return _cachedPackageConfig;
+  return _cachedPackageConfig!;
 }

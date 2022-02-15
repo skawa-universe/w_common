@@ -12,7 +12,7 @@ class CacheContext<TIdentifier, TValue> {
   final TIdentifier id;
 
   /// The current value stored in the [Cache] for the attributed [TIdentifier].
-  final TValue value;
+  final TValue? value;
 
   CacheContext(this.id, this.value);
 }
@@ -23,7 +23,9 @@ class CacheContext<TIdentifier, TValue> {
 /// consumption pattern of [Cache] or any other cache implementation.
 class CachingStrategy<TIdentifier, TValue> {
   /// Custom logic to be executed after a [Cache.get] or [Cache.getAsync].
-  Future<Null> onDidGet(TIdentifier id, TValue value) async {}
+  Future<Null> onDidGet(TIdentifier? id, TValue? value) async {
+    return Future<Null>.value(null);
+  }
 
   /// Custom logic to be executed after a [Cache.release].
   ///
@@ -64,23 +66,23 @@ class CachingStrategy<TIdentifier, TValue> {
   ///     // _superLongAsyncCall and onDidRelease have now completed
   ///
   ///     var c = cache.getAsync('id', _superLongAsyncCall);
-  Future<Null> onDidRelease(TIdentifier id, TValue value,
-      Future<Null> remove(TIdentifier id)) async {}
+  Future<Null> onDidRelease(TIdentifier? id, TValue? value,
+      Future<Null> remove(TIdentifier id)?) async {}
 
   /// Custom logic to be executed after a [Cache.remove].
   ///
   /// This indicates that the [TIdentifier], [TValue] pair are no longer in the
   /// cache.
-  Future<Null> onDidRemove(TIdentifier id, TValue value) async {}
+  Future<Null> onDidRemove(TIdentifier? id, TValue? value) async {}
 
   /// Custom logic to be executed before a [Cache.get] or [Cache.getAsync].
   void onWillGet(TIdentifier id) {}
 
   /// Custom logic to be executed before a [Cache.release].
-  void onWillRelease(TIdentifier id) {}
+  void onWillRelease(TIdentifier? id) {}
 
   /// Custom logic to be executed before a [Cache.remove].
-  void onWillRemove(TIdentifier id) {}
+  void onWillRemove(TIdentifier? id) {}
 }
 
 /// An abstraction over [Map] that helps avoid paying construction costs for
@@ -165,17 +167,17 @@ class Cache<TIdentifier, TValue> extends Object with Disposable {
 
   /// Keys that have not been released.
   Iterable<TIdentifier> get liveKeys =>
-      _cache.keys.where((TIdentifier key) => !_isReleased[key]);
+      _cache.keys.where((TIdentifier key) => !_isReleased[key]!);
 
   /// Values that have not been released.
   ///
   /// To access a released value a [get] or [getAsync] should be used.
   Future<Iterable<TValue>> get liveValues =>
-      Future.wait(liveKeys.map((TIdentifier key) => _cache[key]));
+      Future.wait(liveKeys.map((TIdentifier key) => _cache[key]!));
 
   /// Keys that have been released but are not yet removed.
   Iterable<TIdentifier> get releasedKeys =>
-      _cache.keys.where((TIdentifier key) => _isReleased[key]);
+      _cache.keys.where((TIdentifier key) => _isReleased[key]!);
 
   /// Values that have not been released.
   ///
@@ -201,6 +203,7 @@ class Cache<TIdentifier, TValue> extends Object with Disposable {
   @deprecated
   bool containsKey(TIdentifier id) {
     _throwWhenDisposed('containsKey');
+    print("Keys: ${_cache.keys}");
     return liveKeys.contains(id) || releasedKeys.contains(id);
   }
 
@@ -239,7 +242,7 @@ class Cache<TIdentifier, TValue> extends Object with Disposable {
     _isReleased[id] = false;
     // Await any pending cached futures
     if (_cache.containsKey(id)) {
-      return _cache[id].then((TValue value) async {
+      return _cache[id]!.then((TValue value) async {
         await _cachingStrategy.onDidGet(id, value);
         return value;
       });
@@ -250,16 +253,17 @@ class Cache<TIdentifier, TValue> extends Object with Disposable {
     _cache[id] = completer.future;
     try {
       final TValue value = valueFactory.call();
-
+      print("value: ${id.runtimeType}  || ${valueFactory.runtimeType}");
       _cachingStrategy.onDidGet(id, value).then((Null _) {
         _didUpdateController.add(CacheContext(id, value));
         completer.complete(value);
       });
     } catch (error, stackTrace) {
+      print(error);
       completer.completeError(error, stackTrace);
     }
 
-    return _cache[id];
+    return _cache[id]!;
   }
 
   /// Returns a value from the cache for a given [TIdentifier].
@@ -298,7 +302,7 @@ class Cache<TIdentifier, TValue> extends Object with Disposable {
     _cachingStrategy.onWillGet(id);
     // Await any pending cached futures
     if (_cache.containsKey(id)) {
-      return _cache[id].then((TValue value) async {
+      return _cache[id]!.then((TValue value) async {
         await _cachingStrategy.onDidGet(id, value);
         return value;
       });
@@ -311,7 +315,7 @@ class Cache<TIdentifier, TValue> extends Object with Disposable {
       return value;
     });
 
-    return _cache[id];
+    return _cache[id]!;
   }
 
   /// Marks a [TIdentifier] [TValue] pair as eligible for removal.
@@ -336,7 +340,7 @@ class Cache<TIdentifier, TValue> extends Object with Disposable {
     // Await any pending cached futures
     if (_cache.containsKey(id)) {
       _cachingStrategy.onWillRelease(id);
-      return _cache[id].then((TValue value) async {
+      return _cache[id]!.then((TValue value) async {
         await _cachingStrategy.onDidRelease(id, value, remove);
         _didReleaseController.add(CacheContext(id, value));
       }).catchError((Object error, StackTrace stackTrace) {
@@ -364,9 +368,9 @@ class Cache<TIdentifier, TValue> extends Object with Disposable {
     if (_cache.containsKey(id)) {
       _cachingStrategy.onWillRemove(id);
       final removedValue = _cache.remove(id);
-      return removedValue.then((TValue value) async {
+      return removedValue!.then((TValue value) async {
         if (_applyToItemCallBacks[id] != null) {
-          await Future.wait(_applyToItemCallBacks[id]);
+          await Future.wait(_applyToItemCallBacks[id]!);
         }
         await _cachingStrategy.onDidRemove(id, value);
         _didRemoveController.add(CacheContext(id, value));
@@ -390,25 +394,26 @@ class Cache<TIdentifier, TValue> extends Object with Disposable {
   ///
   /// If the [Cache] [isOrWillBeDisposed] then a [StateError] is thrown.
   Future<bool> applyToItem(
-      TIdentifier id, dynamic callback(Future<TValue> value)) {
+      TIdentifier id, dynamic callback(Future<TValue> value)) async {
     _log.finest('applyToItem id: $id');
     _throwWhenDisposed('applyToItem');
     if (_isReleased[id] != false) {
       return Future<bool>.value(false);
     }
 
-    final callBackResult = callback(_cache[id]);
+    final callBackResult = callback(_cache[id]!);
     if (callBackResult is Future<dynamic>) {
       // In this case we're only interested in the computation being done or not
       // done, not in the result
-      final errorlessCallbackResult = callBackResult.catchError((_) {});
+      final errorlessCallbackResult =
+          callBackResult.catchError((_) => _ as Object);
 
       _applyToItemCallBacks.putIfAbsent(id, () => <Future<dynamic>>[]);
-      _applyToItemCallBacks[id].add(errorlessCallbackResult);
+      _applyToItemCallBacks[id]!.add(errorlessCallbackResult);
 
       errorlessCallbackResult.whenComplete(() {
-        _applyToItemCallBacks[id].remove(errorlessCallbackResult);
-        if (_applyToItemCallBacks[id].isEmpty) {
+        _applyToItemCallBacks[id]!.remove(errorlessCallbackResult);
+        if (_applyToItemCallBacks[id]!.isEmpty) {
           _applyToItemCallBacks.remove(id);
         }
       });

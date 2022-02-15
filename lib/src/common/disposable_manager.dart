@@ -238,7 +238,7 @@ abstract class DisposableManagerV5 implements DisposableManagerV4 {
   ///      }
   ///
   /// The parameter may not be `null`.
-  ManagedDisposer getManagedDisposer(Disposer disposer);
+  ManagedDisposer? getManagedDisposer(Disposer? disposer);
 }
 
 /// Managers for disposable members.
@@ -282,7 +282,7 @@ abstract class DisposableManagerV6 implements DisposableManagerV5 {
   /// Use `manageAndReturnTypedDisposable` instead. One will need to update
   /// to [DisposableManagerV7] or above for this.
   @deprecated
-  Disposable manageAndReturnDisposable(Disposable disposable);
+  Disposable? manageAndReturnDisposable(Disposable? disposable);
 }
 
 /// Managers for disposable members.
@@ -317,7 +317,7 @@ abstract class DisposableManagerV7 implements DisposableManagerV6 {
   ///      }
   ///
   /// A null parameter will result in a null return value.
-  T manageAndReturnTypedDisposable<T extends Disposable>(T disposable);
+  T? manageAndReturnTypedDisposable<T extends Disposable>(T? disposable);
 }
 
 /// An interface that allows a class to flag potential leaks by marking

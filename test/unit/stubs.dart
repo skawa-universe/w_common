@@ -21,7 +21,7 @@ import 'package:w_common/disposable.dart';
 import './typedefs.dart';
 
 abstract class StubDisposable implements Disposable {
-  Disposable injected;
+  Disposable? injected;
   int numTimesOnDisposeCalled = 0;
   int numTimesOnWillDisposeCalled = 0;
   bool wasOnDisposeCalled = false;
@@ -69,6 +69,7 @@ class DisposeCounter extends Disposable {
   String get disposableTypeName => 'DisposeCounter';
 
   int disposeCount = 0;
+
   @override
   Future<Null> dispose() {
     disposeCount++;
@@ -76,7 +77,12 @@ class DisposeCounter extends Disposable {
   }
 }
 
-class MockStreamSubscription<T> extends Mock implements StreamSubscription<T> {}
+class MockStreamSubscription<T> extends Mock implements StreamSubscription<T> {
+  @override
+  Future<void> cancel() async {
+    return super.noSuchMethod(Invocation.method(#cancel, []));
+  }
+}
 
 typedef OnDataCallback<T> = void Function(T event);
 
@@ -84,19 +90,19 @@ typedef OnDoneCallback = void Function();
 
 class StubStream<T> extends Stream<T> {
   @override
-  StreamSubscription<T> listen(OnDataCallback<T> onData,
-      {Function onError, OnDoneCallback onDone, bool cancelOnError}) {
+  StreamSubscription<T> listen(OnDataCallback<T>? onData,
+      {Function? onError, OnDoneCallback? onDone, bool? cancelOnError}) {
     final sub = MockStreamSubscription<T>();
-    when(sub.cancel()).thenReturn(null);
+    // when(sub.cancel()).thenReturn(null);
     return sub;
   }
 }
 
 class TimerHarness {
   bool _didCancelTimer = true;
-  Completer<bool> _didCancelTimerCompleter;
+  Completer<bool>? _didCancelTimerCompleter;
   bool _didCompleteTimer = false;
-  Completer<bool> _didCompleteTimerCompleter;
+  Completer<bool>? _didCompleteTimerCompleter;
   final Completer<Null> _didConcludeCompleter = Completer<Null>();
   final Duration _timerDuration = Duration(milliseconds: 10);
 
@@ -141,8 +147,8 @@ class TimerHarness {
 
     var internalDuration = Duration(milliseconds: (count * 10) + 5);
     Timer(internalDuration, () {
-      _didCompleteTimerCompleter.complete(_didCompleteTimer);
-      _didCancelTimerCompleter.complete(_didCancelTimer);
+      _didCompleteTimerCompleter!.complete(_didCompleteTimer);
+      _didCancelTimerCompleter!.complete(_didCancelTimer);
       _didConcludeCompleter.complete();
     });
   }

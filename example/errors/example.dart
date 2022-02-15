@@ -80,14 +80,11 @@ void main() {
 
   Disposable.enableDebugMode();
 
-  MyManager myManager;
+  MyManager? myManager;
 
-  ButtonElement createMyManagerButton =
-      querySelector('#create-MyManager-button');
-  ButtonElement disposeMyManagerButton =
-      querySelector('#dispose-MyManager-button');
-  ButtonElement posthumousMyManagerButton =
-      querySelector('#posthumous-MyManager-button');
+  ButtonElement createMyManagerButton = querySelector('#create-MyManager-button') as ButtonElement;
+  ButtonElement disposeMyManagerButton = querySelector('#dispose-MyManager-button') as ButtonElement;
+  ButtonElement posthumousMyManagerButton = querySelector('#posthumous-MyManager-button') as ButtonElement;
 
   createMyManagerButton.onClick.listen((_) {
     myManager = MyManager();
@@ -102,18 +99,16 @@ void main() {
       print('You have not created myManager yet.');
     } else {
       try {
-        myManager.addRandomManager();
+        myManager!.addRandomManager();
       } catch (e) {
         errorLogger.severe(e);
       }
     }
   });
 
-  ErrorCreator errorCreator;
-  ButtonElement createErrorCreatorButton =
-      querySelector('#create-ErrorCreator-button');
-  ButtonElement disposeErrorCreatorButton =
-      querySelector('#dispose-ErrorCreator-button');
+  ErrorCreator? errorCreator;
+  ButtonElement createErrorCreatorButton = querySelector('#create-ErrorCreator-button') as ButtonElement;
+  ButtonElement disposeErrorCreatorButton = querySelector('#dispose-ErrorCreator-button') as ButtonElement;
 
   createErrorCreatorButton.onClick.listen((_) {
     errorCreator = ErrorCreator();
@@ -124,7 +119,7 @@ void main() {
       print('You have not created the error creator object yet');
     } else {
       try {
-        await errorCreator.dispose();
+        await errorCreator!.dispose();
       } catch (e) {
         errorLogger.severe(e);
       }

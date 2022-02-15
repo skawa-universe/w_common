@@ -25,12 +25,12 @@ class LeastRecentlyUsedStrategy<TIdentifier, TValue>
   }
 
   @override
-  Future<Null> onDidRelease(
-      TIdentifier id, TValue value, Future<Null> remove(TIdentifier id)) async {
+  Future<Null> onDidRelease(TIdentifier? id, TValue? value,
+      Future<Null> remove(TIdentifier id)?) async {
     // If there are more than _keep items in the queue remove the least recently
     // used.
     while (_removalQueue.length > _keep) {
-      await remove(_removalQueue.removeLast());
+      await remove!(_removalQueue.removeLast());
     }
   }
 
@@ -41,7 +41,7 @@ class LeastRecentlyUsedStrategy<TIdentifier, TValue>
   }
 
   @override
-  void onWillRelease(TIdentifier id) {
+  void onWillRelease(TIdentifier? id) {
     // id has been released, add it to the front of the removal queue. If
     // necessary, the least recently used items will be removed in onDidRemove
     // which the cache will call after any pending async value factory
@@ -49,12 +49,12 @@ class LeastRecentlyUsedStrategy<TIdentifier, TValue>
     // onWillRelease rather than onDidRelease to allow a get called before an
     // async value factory completes to cancel an unnecessary removal.
     if (!_removalQueue.contains(id)) {
-      _removalQueue.addFirst(id);
+      _removalQueue.addFirst(id!);
     }
   }
 
   @override
-  void onWillRemove(TIdentifier id) {
+  void onWillRemove(TIdentifier? id) {
     // id will be removed, removing it again is unnecessary.
     _removalQueue.remove(id);
   }

@@ -35,9 +35,9 @@ void main() {
 
     test('completeErrorIfNotCompleted should not throw if already completed',
         () {
-      final completer = Completer<int>();
-      completer.future
-          .catchError((dynamic _) {}); // if we don't catch, the test will error
+      final completer = Completer<Object>();
+      completer.future.catchError(
+          (Object _) => _); // if we don't catch, the test will error
       completer.completeError(Object());
       expect(() => completer.completeErrorIfNotCompleted(Object()),
           returnsNormally);
@@ -50,6 +50,7 @@ void main() {
       completer.future.catchError(expectAsync2((dynamic err, StackTrace st) {
         expect(err, equals(errObj));
         expect(st, isNotNull);
+        return 0;
       }));
       completer.completeErrorIfNotCompleted(errObj, StackTrace.current);
     });
